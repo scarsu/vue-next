@@ -1,0 +1,56 @@
+<div id="app">
+  <div>x:{{x}},y:{{y}}</div>
+  <div>time:{{time}}</div>
+</div>
+
+<script src="../../dist/vue.global.js"></script>
+
+<script>
+
+const {createApp, reactive, toRefs, onMounted, onUnmounted} = Vue
+
+// 鼠标位置监听
+function useMouse(){
+  // 声明响应式数据
+  const state = reactive({x:0, y:0})
+  const update = e =>{
+    state.x = e.pageX
+    state.y = e.pageY
+  }
+  onMounted(()=>{
+    window.addEventListener('mousemove',update)
+  })
+  onUnmounted(()=>{
+    window.removeEventListener('mousemove',update)
+  })
+
+  // 返回响应式数据
+  return toRefs(state)
+}
+
+// 时间检测
+function useTime(){
+  const state = reactive({time:new Date()})
+  onMounted(()=>{
+    setInterval(()=>{
+      state.time = new Date()
+    }, 1000)
+  })
+  // 返回响应式数据
+  return toRefs(state)
+}
+
+const App = {
+  setup(){
+    // 复用逻辑
+    const {x,y} = useMouse()
+    const {time} = useTime()
+    return {
+      x,y,time
+    }
+  }
+}
+
+createApp(App).mount('#app')
+
+</script>

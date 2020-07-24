@@ -8,16 +8,26 @@ if (!process.env.TARGET) {
 }
 
 const masterVersion = require('./package.json').version
+
+// 获取packages路径
 const packagesDir = path.resolve(__dirname, 'packages')
+
+// 子模块/目标包的路径，默认是packages/vue
 const packageDir = path.resolve(packagesDir, process.env.TARGET)
+
+// 包名
 const name = path.basename(packageDir)
+
+// 获取绝对路径
 const resolve = p => path.resolve(packageDir, p)
+
 const pkg = require(resolve(`package.json`))
 const packageOptions = pkg.buildOptions || {}
 
 // ensure TS checks only once for each build
 let hasTSChecked = false
 
+// 输出的配置
 const outputConfigs = {
   'esm-bundler': {
     file: resolve(`dist/${name}.esm-bundler.js`),
@@ -31,6 +41,7 @@ const outputConfigs = {
     file: resolve(`dist/${name}.cjs.js`),
     format: `cjs`
   },
+  // global的格式 是浏览器用的iife自调函数
   global: {
     file: resolve(`dist/${name}.global.js`),
     format: `iife`
@@ -56,7 +67,8 @@ const inlineFormats = process.env.FORMATS && process.env.FORMATS.split(',')
 const packageFormats = inlineFormats || packageOptions.formats || defaultFormats
 const packageConfigs = process.env.PROD_ONLY
   ? []
-  : packageFormats.map(format => createConfig(format, outputConfigs[format]))
+  : // ⭐createConfig调用
+    packageFormats.map(format => createConfig(format, outputConfigs[format]))
 
 if (process.env.NODE_ENV === 'production') {
   packageFormats.forEach(format => {
@@ -114,6 +126,7 @@ function createConfig(format, output, plugins = []) {
   // during a single build.
   hasTSChecked = true
 
+  // ⭐入口文件
   const entryFile = /runtime$/.test(format) ? `src/runtime.ts` : `src/index.ts`
 
   const external =

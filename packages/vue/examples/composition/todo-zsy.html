@@ -1,0 +1,157 @@
+
+
+<div id="app">
+  <input type="text" v-model="model.desc">
+  <button @click="addTodo">添加</button>
+  <ul>
+    <li 
+      v-for="item in todos"
+      :key="item.id"
+      @click="doneTodo(item.id)">
+      <div :class="{done:item.done}">{{item.desc}}</div>
+    </li>
+  </ul>
+  <div class="count">总数：{{count}}</div>
+  <div class="count">已完成：{{doneCount}}</div>
+  <div class="count">未完成：{{remainCount}}</div>
+  <div class="count">单个原始值的响应式{{remainCount}}</div>
+</div>
+<!-- 引入yarn dev打包的js -->
+<script src="../../dist/vue.global.js"></script>
+
+
+<script>
+// Composition API
+// 按需引入API
+// 都是函数API
+const {createApp, reactive, computed, onMounted, onUnmounted, toRefs, watch, ref} = Vue
+
+// 定义一个全局过滤器
+const filters = {
+  all (list) {
+    return list
+  },
+  remain (list) {
+    return list.filter((item) => {
+      return !item.done
+    })
+  },
+  done (list) {
+    return list.filter(function (item) {
+      return item.done
+    })
+  }
+}
+
+// 定义一个localStorage存取器
+const STORAGE_KEY = 'todo-zsy'
+const todoStorage = {
+  fetch(){
+    const items = JSON.parse(localStorage.getItem(STORAGE_KEY))
+    return items||[]
+  },
+  save(items){
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(items))
+  }
+}
+
+// 声明组件对象
+const App = {
+	// setup()函数API 代替 options选项
+	// 在setup()函数中定义一切模板中需要使用的 数据/方法
+	// setup()调用时刻是初始化属性确定后，beforeCreate之前
+  setup(){
+    // 通过reactive()函数API 创建响应式数据state
+		// reactive()接收一个对象，返回一个响应式的代理对象
+    const state = reactive({
+      todos:todoStorage.fetch(),
+      model:{
+        desc:''
+      },
+			// 在reactive()中使用 computed()函数API 定义计算属性
+      // 传给computed()的函数 一定要记得有return！ 相当于传入一个计算属性的getetr函数
+			// computed()返回一个不可变的响应式引用对象
+      count:computed(()=>{
+        return filters.all(state.todos).length
+      }),
+      remainCount:computed(()=>{
+        return filters.remain(state.todos).length
+      }),
+      doneCount:computed(()=>{
+        return filters.done(state.todos).length
+      })
+    })
+
+    // 通过ref()函数API，定义 单个 原始值 响应式变化
+    const counter = ref(1)
+    setTimeout(()=>{
+      counter.value++
+    },1000)
+
+
+    watch(state,()=>{
+      console.log(['state出现了变化',state])
+    })
+    watch(state.todos,()=>{
+      console.log(['todos出现了变化',state.todos])
+    })
+
+    // 生命周期函数API（也要定义在setup里面）
+    onMounted(()=>{
+      console.log('onMounted hook')
+    })
+    onUnmounted(()=>{
+      console.log('onUnmounted hook')
+    })
+
+    // 需要暴露给模板调用的方法
+    function addTodo(){
+      const val = state.model.desc
+      state.todos.push({
+        desc:val,
+        done:false,
+        id:state.count
+      })
+      state.model.desc=''
+      todoStorage.save(state.todos)
+    }
+    function doneTodo(id){
+      state.todos.forEach(item=>{
+        if(item.id === id){
+          item.done=!item.done
+        }
+      })
+      todoStorage.save(state.todos)
+    }
+    
+    // 所有模板需要使用的响应式属性/方法
+    // 都要在setup函数中return出去，作为渲染函数的上下文
+    return{
+      ...toRefs(state), // 通过toRefs()API 将state展开，以便在template里面可以直接引用state上的属性
+      counter,
+      addTodo,
+      doneTodo
+    }
+  },
+
+  // 自定义指令放在setup外面
+  directives:{
+    'test':(el,{value})=>{
+      if(value){
+        el.focus
+      }
+    }
+  }
+}
+
+// 链式调用mount createApp({}).mount()
+createApp(App).mount("#app")
+
+</script>
+
+<style>
+  .done{
+    text-decoration: line-through;
+    color:gray;
+  }
+</style>

@@ -1,3 +1,4 @@
+// 这个文件是 完全版构建 的 入口文件，包含运行时+编译器，支持模板选项的动态编译
 // This entry is the "full-build" that includes both the runtime
 // and the compiler, and supports on-the-fly compilation of the template option.
 import { initDev } from './dev'

@@ -51,6 +51,7 @@ export const hydrate = ((...args) => {
 }) as RootHydrateFunction
 
 export const createApp = ((...args) => {
+  debugger
   const app = ensureRenderer().createApp(...args)
 
   if (__DEV__) {
